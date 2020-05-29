@@ -19,7 +19,7 @@
                 <el-input v-model="registerForm.email" type="email" placeholder="Email"></el-input>
               </el-form-item>
               <el-form-item label="密码" prop="password">
-                <el-input v-model="registerForm.password" type="password" show-password placeholder="密码"></el-input>
+                <el-input v-model="registerForm.password" type="password" show-password placeholder="密码" ></el-input>
               </el-form-item>
               <el-form-item label="确认密码" prop="password_confirmation">
                 <el-input v-model="registerForm.password_confirmation" type="password" show-password placeholder="确认密码"></el-input>
@@ -69,18 +69,18 @@
         rules: {
           username: [
             {required: true, message: '请输入用户名'},
-            { min: 3, max: 12, message: '长度在 3 到 12 个字符', trigger: 'change' }
+            { min: 3, max: 12, message: '长度在 3 到 12 个字符', trigger: 'blur' }
           ],
           email: [
             {required: true, message: '请输入email'},
-            {type: 'email', message: '请输入正确的邮箱地址', trigger: ['blur', 'change']},
+            {type: 'email', message: '请输入正确的邮箱地址', trigger: ['blur']},
           ],
           password: [
             {required: true, message: '请输入密码'},
-            { min: 3, max: 20, message: '长度在 6 到 20 个字符', trigger: 'change' },
+            { min: 3, max: 20, message: '长度在 6 到 20 个字符', trigger: 'blur' },
           ],
           password_confirmation: [
-            { validator: passwordConfirm, trigger: 'change' }
+            { validator: passwordConfirm, trigger: 'blur' }
           ],
         }
 
@@ -112,8 +112,8 @@
               } else if(response.data.code === 1029) {
                 console.log(response)
                 let message = '';
-                for(let key in response.data.data) {
-                  message += response.data.data[key][0]
+                for(let key in response.data.errors) {
+                  message += response.data.errors[key]
                 }
                 self.$message({
                   showClose: true,
@@ -138,8 +138,8 @@
     created() {
       // store.commit('getCategories');
       // alert(this.GLOBAL.token);
-      this.GLOBAL.getToken();
-      this.GLOBAL.remoteCheckLogin()
+      // this.GLOBAL.getToken();
+      this.GLOBAL.checkLogin()
     },
     beforeMount() {
       this.registerForm.email = ''

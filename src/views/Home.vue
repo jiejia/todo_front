@@ -53,7 +53,7 @@
       <div class="task-title-list">
         <ul class="unfinished">
           <li @click="selectTask($event, task)" v-for="task in tasks" v-if="task.status==0">
-            <el-checkbox v-model="checked" class="title-checkbox"></el-checkbox>
+            <el-checkbox @change="triggerTask($event, task)" class="title-checkbox"></el-checkbox>
             <div class="title-wrap">
               <div class="title-text">
                 <div contenteditable="true" v-on:keyup.enter="save" class="title">{{task.title}}</div>
@@ -68,7 +68,8 @@
             </template>
             <ul class="finished">
               <li @click="selectTask($event, task)" v-for="task in tasks" v-if="task.status==1">
-                <el-checkbox v-model="checked"  class="title-checkbox"></el-checkbox>
+                <el-checkbox @change="triggerTask($event, task)" class="title-checkbox"></el-checkbox>
+
                 <div contenteditable="true" class="title">{{task.title}}</div>
               </li>
             </ul>
@@ -121,12 +122,12 @@
       return {
         categoryFormVisible: false,
         taskTitle: '',
-        checked: false,
+        tastList: [],
         leftBarTab: 'list',
         current: {
-          categoryName: '电影',
-          taskName: '任务标题',
-          taskContent: '任务内容',
+          categoryName: '',
+          taskName: '',
+          taskContent: '',
           categoryId: 1
         },
         categoryForm: {
@@ -157,6 +158,9 @@
         },
         categories: [
         ],
+        rawCategories: [
+
+        ],
         tasks: [
           {title: '没有任务', content: '', status: 1},
         ],
@@ -174,8 +178,14 @@
           list[i].className = "";
         }
         e.currentTarget.className = 'focus';
+        // e.currentTarget.getElementsByClassName('title-checkbox').checked = true
         this.current.categoryName = category.name;
         this.current.categoryId = category.id;
+        category.status = true
+
+        window.localStorage.setItem('currentCategory', category.name)
+        window.localStorage.setItem('currentCategoryId', category.id)
+
         this.getTasks()
       },
       selectTask: function(e, task) {
@@ -188,6 +198,51 @@
         e.currentTarget.className = 'focus';
         this.current.taskName = task.name;
         this.current.taskContent = task.content;
+        // console.log(task)
+      },
+      triggerTask: function(e, task) {
+        // console.log(e)
+        if (e) {
+          let self = this
+          let message = '';
+          
+          if (task.status == 1) {
+            status = 0;
+            message = '还原已任务'
+          } else {
+            status = 1;
+            message = '任务已完成'
+          }
+
+          this.axios.post('/task/create-or-update', {
+            id: task.id,
+            status: status,
+          }).then(function (response) {
+           // console.log(response)
+            if (response.data.code === 0) {
+              self.getTasks()  
+              self.getCategories()
+            } else if(response.data.code === 1029) {
+              console.log(response)
+              let message = '';
+              for(let key in response.data.errors) {
+                message += "<p>" + response.data.errors[key] + '<\p>'
+              }
+              self.$message({
+                dangerouslyUseHTMLString: true,
+                showClose: true,
+                message: message,
+                type: 'warning',
+                duration: 1000,
+                onClose() {
+                }
+              });
+            }
+          }).catch(function (error) {
+            console.log(error);
+          });    
+          
+        }
       },
       taskTitleFocus: function(e) {
         e.currentTarget.className = 'focus el-input__inner';
@@ -223,7 +278,7 @@
               name: self.categoryForm.name,
               color: self.categoryForm.color,
             }).then(function (response) {
-              console.log(response)
+              // console.log(response)
               if (response.data.code === 0) {
                 self.$message({
                   showClose: true,
@@ -241,8 +296,8 @@
               } else if(response.data.code === 1029) {
                 console.log(response)
                 let message = '';
-                for(let key in response.data.data) {
-                    message += response.data.data[key][0]
+                for(let key in response.data.errors) {
+                    message += response.data.errors[key]
                 }
                 self.$message({
                   showClose: true,
@@ -271,7 +326,7 @@
           category_id: self.current.categoryId,
           title: self.taskTitle,
         }).then(function (response) {
-          console.log(response)
+          //console.log(response)
           if (response.data.code === 0) {
             self.$message({
               showClose: true,
@@ -282,12 +337,13 @@
                 self.getTasks()
               }
             });
+            self.taskTitle = ''
             self.getCategories()
           } else if(response.data.code === 1029) {
             console.log(response)
             let message = '';
-            for(let key in response.data.data) {
-              message += "<p>" + response.data.data[key][0] + '<\p>'
+            for(let key in response.data.errors) {
+              message += "<p>" + response.data.errors[key] + '<\p>'
             }
             self.$message({
               dangerouslyUseHTMLString: true,
@@ -311,10 +367,22 @@
            // console.log(response)
           self.categories.splice(0);
           response.data.data.records.forEach((item,index,array)=>{
-            //执行代码
             self.categories.push(item);
-             // console.log(item);
+              // console.log(item);
+              if (item.is_default == 1) {
+                self.current.categoryId = item.id
+                self.current.categoryName = item.name
+              }
           })
+
+          if (window.localStorage.getItem('currentCategory') != null) {
+            self.current.categoryId = window.localStorage.getItem('currentCategoryId')
+            self.current.categoryName = window.localStorage.getItem('currentCategory')
+          }
+          this.getTasks()
+
+          // alert(self.current.categoryId)
+          
         }).catch(function (error) {
 
         });
@@ -327,19 +395,29 @@
           console.log(response)
           self.tasks.splice(0);
           response.data.data.records.forEach((item,index,array)=>{
-            //执行代码
             self.tasks.push(item);
-            // console.log(item);
           })
         }).catch(function (error) {
-
+            // let message = '';
+            // for(let key in response.data.errors) {
+            //   message += "<p>" + response.data.errors[key] + '<\p>'
+            // }
+            self.$message({
+              dangerouslyUseHTMLString: true,
+              showClose: true,
+              message: error,
+              type: 'warning',
+              duration: 1000,
+              onClose() {
+              }
+            });
         });
       }
     },
     mounted: function() {
       this.GLOBAL.checkLogin()
       this.getCategories()
-      this.getTasks()
+      // this.current.categoryId = this.categories.
     }
   }
 </script>

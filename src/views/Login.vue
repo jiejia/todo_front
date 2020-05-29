@@ -6,8 +6,8 @@
       </div>
       <div >
         <el-form ref="loginForm" :model="loginForm" :rules="rules" >
-          <el-form-item label="用户名" prop="username">
-            <el-input  type="text" v-model="loginForm.username" placeholder="用户名"></el-input>
+          <el-form-item label="邮箱" prop="email">
+            <el-input  type="text" v-model="loginForm.email" placeholder="邮箱"></el-input>
           </el-form-item>
           <el-form-item label="密码" prop="password">
             <el-input type="password" v-model="loginForm.password" placeholder="密码" @keyup.enter="login('loginForm')"></el-input>
@@ -40,15 +40,16 @@
           display: 'none'
         },
         loginForm: {
-          username: '',
+          email: '',
           password: ''
         },
         rules: {
-          username: [
-            {required: true, message: '请输入用户名'},
+          email: [
+            {required: true, message: '请输入邮箱', trigger: 'blur' },
+            {type: 'email', message: '请输入正确的邮箱地址', trigger: ['blur']},
           ],
           password: [
-            {required: true, message: '请输入密码'},
+            {required: true, message: '请输入密码', trigger: 'blur' },
           ],
         }
       }
@@ -59,11 +60,9 @@
           if (valid) {
             let self = this
             self.btnDisabled = true;
-            let token = self.GLOBAL.getToken()
             this.axios.post('/user/login', {
-              username: this.loginForm.username,
+              email: this.loginForm.email,
               password: this.loginForm.password,
-              token: token
             }).then(function (response) {
               if (response.data.code === 0) {
                 self.$message({
@@ -81,8 +80,8 @@
               } else if(response.data.code === 1029) {
                 console.log(response)
                 let message = '';
-                for(let key in response.data.data) {
-                  message += response.data.data[key][0]
+                for(let key in response.data.errors) {
+                  message += response.data.errors[key]
                 }
                 self.$message({
                   showClose: true,
@@ -107,7 +106,8 @@
 
     },
     mounted: function() {
-      this.GLOBAL.remoteCheckLogin()
+      // this.GLOBAL.remoteCheckLogin()
+      this.GLOBAL.checkLogin()
     }
   }
 </script>

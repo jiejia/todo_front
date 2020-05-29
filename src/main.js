@@ -22,7 +22,7 @@ Vue.prototype.GLOBAL = global_
 Vue.config.productionTip = false
 axios.defaults.headers.common['Content-Type'] = 'application/x-www-form-urlencoded';
 axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
-axios.defaults.baseURL = 'http://todo.test/api';
+axios.defaults.baseURL = 'http://200.todo.test/api';
 
 Vue.use(ElementUI)
 new Vue({
