@@ -105,9 +105,11 @@
       },
 
     },
+    beforeCreate: function() {
+      this.GLOBAL.checkLogin()
+    },    
     mounted: function() {
       // this.GLOBAL.remoteCheckLogin()
-      this.GLOBAL.checkLogin()
     }
   }
 </script>

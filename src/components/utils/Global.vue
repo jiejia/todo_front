@@ -35,7 +35,17 @@
           case 401:
             // 返回 401 清除token信息并跳转到登录页面
             // alert(401)
-            router.push({name: 'login'});
+            router.push({name: 'login'});break;
+          case 403:
+            self.$message({
+              dangerouslyUseHTMLString: true,
+              showClose: true,
+              message: "系统被拒绝，请联系管理员",
+              type: 'warning',
+              duration: 1000,
+              onClose() {
+              }
+            });  break;
         }
       }
       return Promise.reject(error) // 返回接口返回的错误信息

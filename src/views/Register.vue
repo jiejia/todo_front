@@ -135,15 +135,10 @@
         });
       }
     },
-    created() {
-      // store.commit('getCategories');
-      // alert(this.GLOBAL.token);
-      // this.GLOBAL.getToken();
+    beforeCreate: function() {
       this.GLOBAL.checkLogin()
-    },
-    beforeMount() {
       this.registerForm.email = ''
-    }
+    },   
   }
 </script>
 <style>

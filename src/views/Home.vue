@@ -52,11 +52,11 @@
       </div>
       <div class="task-title-list">
         <ul class="unfinished">
-          <li @click="selectTask($event, task)" v-for="task in tasks" v-if="task.status==0">
+          <li @click="selectTask($event, task)" v-for="task in tasks" v-if="task.status==0" :key="task.id">
             <el-checkbox @change="triggerTask($event, task)" class="title-checkbox"></el-checkbox>
             <div class="title-wrap">
               <div class="title-text">
-                <div contenteditable="true" v-on:keyup.enter="save" class="title">{{task.title}}</div>
+                <div contenteditable="true" v-on:keyup.enter="save"  v-on:blur="listTaskTitleBlur($event, task)" class="title">{{task.title}}</div>
               </div>
             </div>
           </li>
@@ -67,10 +67,10 @@
               已完成
             </template>
             <ul class="finished">
-              <li @click="selectTask($event, task)" v-for="task in tasks" v-if="task.status==1">
+              <li @click="selectTask($event, task)" v-for="task in tasks" v-if="task.status==1" :key="task.id">
                 <el-checkbox @change="triggerTask($event, task)" class="title-checkbox"></el-checkbox>
 
-                <div contenteditable="true" class="title">{{task.title}}</div>
+                <div contenteditable="true" class="title" v-on:blur="listTaskTitleBlur($event, task)">{{task.title}}</div>
               </li>
             </ul>
           </el-collapse-item>
@@ -80,14 +80,14 @@
     </div>
     <div id="right-content">
       <div class="task-datetime"></div>
-      <div class="task-detail">
-        <div class="title"><el-input v-model="current.taskName" placeholder="请输入内容"></el-input></div>
+      <div class="task-detail" v-bind:style=" {visibility: current.taskFormVisible }">
+        <div class="title"><el-input v-model="current.taskName" placeholder="请输入内容" v-on:blur="titleChangeBlur($event)"></el-input></div>
         <div class="content">
           <el-input
             type="textarea"
             :rows="21"
             placeholder="请输入内容"
-            v-model="current.taskContent">
+            v-model="current.taskContent" v-on:blur="titleChangeBlur($event)">
           </el-input>
 
         </div>
@@ -126,9 +126,11 @@
         leftBarTab: 'list',
         current: {
           categoryName: '',
+          taskId: 0,          
           taskName: '',
           taskContent: '',
-          categoryId: 1
+          categoryId: 1,
+          taskFormVisible: 'hidden',
         },
         categoryForm: {
           name: '',
@@ -179,6 +181,7 @@
         }
         e.currentTarget.className = 'focus';
         // e.currentTarget.getElementsByClassName('title-checkbox').checked = true
+        this.current.taskFormVisible = 'hidden'
         this.current.categoryName = category.name;
         this.current.categoryId = category.id;
         category.status = true
@@ -195,11 +198,77 @@
           // console.log(list[i]);
           list[i].className = "";
         }
+        console.log(task)
         e.currentTarget.className = 'focus';
-        this.current.taskName = task.name;
+        this.current.taskFormVisible = 'visible'
+        this.current.taskId = task.id;
+        this.current.taskName = task.title;
         this.current.taskContent = task.content;
         // console.log(task)
       },
+      titleChangeBlur: function(e) {
+        return 
+        let self = this
+          this.axios.post('/task/create-or-update', {
+            id: this.current.taskId,
+            title: this.current.taskName,
+            content: this.current.taskContent,
+          }).then(function (response) {
+          // console.log(response)
+            if (response.data.code === 0) {
+            } else if(response.data.code === 1029) {
+              console.log(response)
+              let message = '';
+              for(let key in response.data.errors) {
+                message += "<p>" + response.data.errors[key] + '<\p>'
+              }
+              self.$message({
+                dangerouslyUseHTMLString: true,
+                showClose: true,
+                message: message,
+                type: 'warning',
+                duration: 1000,
+                onClose() {
+                }
+              });
+            }
+            self.getTasks()
+          }).catch(function (error) {
+            console.log(error);
+          });    
+      },
+
+      listTaskTitleBlur: function(e, task) {
+          let self = this
+          this.axios.post('/task/create-or-update', {
+            id: this.current.taskId,
+            title: this.current.taskName,
+            content: this.current.taskContent,
+          }).then(function (response) {
+          // console.log(response)
+            if (response.data.code === 0) {
+            } else if(response.data.code === 1029) {
+              console.log(response)
+              let message = '';
+              for(let key in response.data.errors) {
+                message += "<p>" + response.data.errors[key] + '<\p>'
+              }
+              self.$message({
+                dangerouslyUseHTMLString: true,
+                showClose: true,
+                message: message,
+                type: 'warning',
+                duration: 1000,
+                onClose() {
+                }
+              });
+            }
+            self.getTasks()
+          }).catch(function (error) {
+            console.log(error);
+          });    
+      },
+
       triggerTask: function(e, task) {
         // console.log(e)
         if (e) {
@@ -253,9 +322,10 @@
       save: function(e) {
 
         if (e.charCode === 13) {
+          
           e.preventDefault();
+          return false;
         }
-        alert('ok');
 
       },
       userCommand(command) {
@@ -414,8 +484,10 @@
         });
       }
     },
-    mounted: function() {
+    beforeCreate: function() {
       this.GLOBAL.checkLogin()
+    },
+    mounted: function() {
       this.getCategories()
       // this.current.categoryId = this.categories.
     }

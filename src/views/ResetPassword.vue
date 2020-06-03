@@ -121,12 +121,12 @@
       }
     },
     mounted: function() {
-      this.GLOBAL.checkLogin()
       // 检查参数是否正确
       this.resetPasswordForm.email = this.$route.query.email
     },
-    beforeMount() {
-    }
+    beforeCreate: function() {
+      this.GLOBAL.checkLogin()
+    },   
   }
 </script>
 <style>

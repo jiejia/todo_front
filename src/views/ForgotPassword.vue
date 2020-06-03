@@ -101,11 +101,9 @@
 
       },
     },
-    mounted: function() {
-       this.GLOBAL.checkLogin()
-    },
-    beforeMount() {
-    }
+    beforeCreate: function() {
+      this.GLOBAL.checkLogin()
+    },   
   }
 </script>
 <style>
